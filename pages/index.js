@@ -1,30 +1,30 @@
 import React from "react";
+import "isomorphic-fetch";
+import Layout from "../components/Layout";
+import ChannelGrid from "../components/ChannelGrid";
+import Error from "next/error";
 
 export default function Index(props) {
-  return (
-    <div>
-      <style jsx>{`
-        h1 {
-          color: red;
-        }
-        div :global(p) {
-          color: green;
-        }
-        img {
-          max-width: 50px;
-          display: block;
-          margin: 0 auto;
-        }
-      `}</style>
-      <style jsx global>{`
-        body {
-          background: yellow;
-        }
-      `}</style>
+  const { channels, statusCode } = props;
 
-      <h1>Hola Mundo!</h1>
-      <p>Bienvenidos al curso de next js</p>
-      <img src="static/platzi-logo-small.png" alt="Platzi" />
-    </div>
+  if (statusCode !== 200) {
+    return <Error statusCode={statusCode} />;
+  }
+
+  return (
+    <Layout title="Podcasts">
+      <ChannelGrid channels={channels} />
+    </Layout>
   );
+}
+
+export async function getServerSideProps({ res }) {
+  try {
+    let req = await fetch("https://api.audioboom.com/channels/recommended");
+    let { body: channels } = await req.json();
+    return { props: { channels, statusCode: 200 } };
+  } catch (error) {
+    res.statusCode = 503;
+    return { props: { channels: null, statusCode: 503 } };
+  }
 }
